@@ -36,25 +36,14 @@ class FlipperNode(Node):
         self.cv_bridge = CvBridge()
         super().__init__('flipper_node')
 
-        self.declare_parameter('flip_vertical', False)
-        self.declare_parameter('flip_horizontal', False)
-
-        self.flip_vertical = self.get_parameter('flip_vertical').get_parameter_value().bool_value
-        self.flip_horizontal = self.get_parameter('flip_horizontal').get_parameter_value().bool_value
-
-        self.publisher = self.create_publisher(Image, '/image/flipped', 1)
-        self.subscription = self.create_subscription(Image,'/image/raw',self.listener_callback,1)
+        self.publisher = self.create_publisher(Image, '/cam2/image_proc/rotated', 1)
+        self.subscription = self.create_subscription(Image,'/cam2/image_proc/decompressed',self.listener_callback,1)
         self.subscription
 
 
     def listener_callback(self, msg):
         current_frame = self.cv_bridge.imgmsg_to_cv2(msg,"bgr8")
-        if self.flip_vertical and self.flip_horizontal:
-            current_frame = cv2.flip(current_frame,-1)
-        elif self.flip_vertical==True:
-            current_frame = cv2.flip(current_frame,0)
-        elif self.flip_horizontal==True:
-            current_frame = cv2.flip(current_frame,1)
+        current_frame = cv2.rotate(current_frame, cv2.ROTATE_180)
         #cv2.imshow('test',current_frame)
         #cv2.waitKey(1)
         self.publisher.publish(self.cv_bridge.cv2_to_imgmsg(current_frame,"bgr8"))
